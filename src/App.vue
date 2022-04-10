@@ -1,3 +1,10 @@
+<!--
+ * @Author: TYW
+ * @Date: 2022-04-10 17:57:00
+ * @LastEditTime: 2022-04-10 18:16:06
+ * @LastEditors: TYW
+ * @Description: 
+-->
 <template>
   <div id="app">
     <div id="cesiumContainer"></div>
@@ -12,16 +19,17 @@
 </template>
 
 <script>
-import {
-  VERSION as CesiumVersion,
-  Cartesian3 as CesiumCartesian3,
-  Viewer as CesiumViewer,
-  ShadowMode as CesiumShadowMode,
-  Color as CesiumColor,
-  Math as CesiumMath,
-  TileMapServiceImageryProvider as CesiumTileMapServiceImageryProvider,
-  buildModuleUrl as CesiumBuildModuleUrl
-} from '@/thirdparty/Cesium/Cesium.js'
+// import {
+//   VERSION as CesiumVersion,
+//   Cartesian3 as CesiumCartesian3,
+//   Viewer as CesiumViewer,
+//   ShadowMode as CesiumShadowMode,
+//   Color as CesiumColor,
+//   Math as CesiumMath,
+//   TileMapServiceImageryProvider as CesiumTileMapServiceImageryProvider,
+//   buildModuleUrl as CesiumBuildModuleUrl
+// } from '@/thirdparty/CesiumSuperMap167/Cesium.js'
+import * as Cesium from '@/thirdparty/Cesium181/Cesium.js'
 // 使用到的 ThreeJs模块
 import {
   REVISION as ThreeVersion,
@@ -76,7 +84,7 @@ export default {
       }
 
       function initCesium() {
-        cesium.viewer = new CesiumViewer(cesiumContainer, {
+        cesium.viewer = new Cesium.Viewer(cesiumContainer, {
           useDefaultRenderLoop: false,
           selectionIndicator: false,
           homeButton: false,
@@ -103,22 +111,23 @@ export default {
           resolutionScale: 0.1,
           orderIndependentTranslucency: true,
           // imageryProvider: null,
-          imageryProvider: new CesiumTileMapServiceImageryProvider({
-            url: CesiumBuildModuleUrl('Assets/Textures/NaturalEarthII') // 离线模式的图层
+          // 超图和cesium 不同
+          imageryProvider: new Cesium.TileMapServiceImageryProvider({
+            url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII') // 离线模式的图层
           }),
           baseLayerPicker: false,
           geocoder: false,
           automaticallyTrackDataSourceClocks: false,
           dataSources: null,
-          clock: null,
-          terrainShadows: CesiumShadowMode.DISABLED
+          clock: null
+          // terrainShadows: Cesium.ShadowMode.DISABLED
         })
 
         // 开启或关闭地下模式
         cesium.viewer.scene.screenSpaceCameraController.enableCollisionDetection = true
-        cesium.viewer.scene.globe.translucency.frontFaceAlpha = 0.8 // 设置透明度
+        // cesium.viewer.scene.globe.translucency.frontFaceAlpha = 0.8 // 设置透明度
 
-        const center = CesiumCartesian3.fromDegrees(
+        const center = Cesium.Cartesian3.fromDegrees(
           (minWGS84[0] + maxWGS84[0]) / 2,
           (minWGS84[1] + maxWGS84[1]) / 2 - 1,
           200000
@@ -126,9 +135,9 @@ export default {
         cesium.viewer.camera.flyTo({
           destination: center,
           orientation: {
-            heading: CesiumMath.toRadians(0),
-            pitch: CesiumMath.toRadians(-60),
-            roll: CesiumMath.toRadians(0)
+            heading: Cesium.Math.toRadians(0),
+            pitch: Cesium.Math.toRadians(-60),
+            roll: Cesium.Math.toRadians(0)
           },
           duration: 1
         })
@@ -137,13 +146,13 @@ export default {
         const entity = {
           name: 'Polygon',
           polygon: {
-            hierarchy: CesiumCartesian3.fromDegreesArray([
+            hierarchy: Cesium.Cartesian3.fromDegreesArray([
               minWGS84[0], minWGS84[1],
               maxWGS84[0], minWGS84[1],
               maxWGS84[0], maxWGS84[1],
               minWGS84[0], maxWGS84[1]
             ]),
-            material: CesiumColor.RED.withAlpha(0.2)
+            material: Cesium.Color.RED.withAlpha(0.2)
           }
         }
         cesium.viewer.entities.add(entity)
@@ -163,9 +172,9 @@ export default {
         const Amlight = new AmbientLight(0xffffff, 2)
         three.scene.add(Amlight)
         ThreeContainer.appendChild(three.renderer.domElement)
-
-        const axesHelper = new AxesHelper(3000000000000)
-        three.scene.add(axesHelper)
+        // 坐标轴
+        // const axesHelper = new AxesHelper(3000000000000)
+        // three.scene.add(axesHelper)
 
         init3DObject(function () {
           callback()
@@ -247,7 +256,7 @@ export default {
 
       function renderThreeObj() {
         // register Three.js scene with Cesium
-        three.camera.fov = CesiumMath.toDegrees(
+        three.camera.fov = Cesium.Math.toDegrees(
           cesium.viewer.camera.frustum.fovy
         ) // ThreeJS FOV is vertical
         three.camera.updateProjectionMatrix()
@@ -261,13 +270,13 @@ export default {
           minWGS84 = _3Dobjects[id].minWGS84
           maxWGS84 = _3Dobjects[id].maxWGS84
           // convert lat/long center position to Cartesian3
-          const center = CesiumCartesian3.fromDegrees(
+          const center = Cesium.Cartesian3.fromDegrees(
             (minWGS84[0] + maxWGS84[0]) / 2,
             (minWGS84[1] + maxWGS84[1]) / 2
           )
 
           // get forward direction for orienting model
-          const centerHigh = CesiumCartesian3.fromDegrees(
+          const centerHigh = Cesium.Cartesian3.fromDegrees(
             (minWGS84[0] + maxWGS84[0]) / 2,
             (minWGS84[1] + maxWGS84[1]) / 2,
             1
@@ -275,10 +284,10 @@ export default {
 
           // use direction from bottom left to top left as up-vector
           const bottomLeft = cartToVec(
-            CesiumCartesian3.fromDegrees(minWGS84[0], minWGS84[1])
+            Cesium.Cartesian3.fromDegrees(minWGS84[0], minWGS84[1])
           )
           const topLeft = cartToVec(
-            CesiumCartesian3.fromDegrees(minWGS84[0], maxWGS84[1])
+            Cesium.Cartesian3.fromDegrees(minWGS84[0], maxWGS84[1])
           )
           const latDir = new Vector3().subVectors(bottomLeft, topLeft).normalize()
 
@@ -333,7 +342,7 @@ export default {
         loop() // Looping renderer
       }) // Initialize Three.js renderer
     }
-    console.info(' Cesium : ' + CesiumVersion)
+    console.info(' Cesium : ' + Cesium.Version)
     console.info('ThreeJs : ' + ThreeVersion)
     main()
   }
